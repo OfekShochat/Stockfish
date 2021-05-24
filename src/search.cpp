@@ -1075,6 +1075,8 @@ moves_loop: // When in check, search starts from here
               singularQuietLMR = !ttCapture;
               if (!PvNode && value < singularBeta - 93)
                   extension = 2;
+              else if (PvNode && value < singularBeta - 300)
+                  extension = -5;
           }
 
           // Multi-cut pruning

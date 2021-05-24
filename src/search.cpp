@@ -1076,7 +1076,7 @@ moves_loop: // When in check, search starts from here
               if (!PvNode && value < singularBeta - 93)
                   extension = 2;
               else if (PvNode && value < singularBeta - 300)
-                  extension = -5;
+                  extension = -2;
           }
 
           // Multi-cut pruning

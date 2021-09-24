@@ -1042,7 +1042,7 @@ moves_loop: // When in check, search starts here
           moveCountPruning = moveCount >= futility_move_count(improving, depth);
 
           // Reduced depth of the next LMR search
-          int lmrDepth = std::max(newDepth - reduction(improving, depth, moveCount, b > 2), 0);
+          int lmrDepth = std::max(newDepth - reduction(improving, depth, moveCount, b > 3), 0);
 
           if (   captureOrPromotion
               || givesCheck)
@@ -1177,7 +1177,7 @@ moves_loop: // When in check, search starts here
               || !ss->ttPv)
           && (!PvNode || ss->ply > 1 || thisThread->id() % 4 != 3))
       {
-          Depth r = reduction(improving, depth, moveCount, b > 2);
+          Depth r = reduction(improving, depth, moveCount, b > 3);
 
           if (PvNode)
               r--;
@@ -1275,6 +1275,9 @@ moves_loop: // When in check, search starts here
 
           value = -search<PV>(pos, ss+1, -beta, -alpha,
                               std::min(maxNextDepth, newDepth), false);
+          if (ss->staticEval - value < 30 && depth > 7) {
+              b += 2;
+          }
       }
 
       // Step 18. Undo move

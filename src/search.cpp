@@ -1726,7 +1726,7 @@ moves_loop: // When in check, search starts here
     }
     else {
         if (!PvNode)
-            thisThread->mainHistory[us][from_to(bestMove)] << 100;
+            thisThread->mainHistory[us][from_to(bestMove)] << stat_bonus(depth) / 16;
         // Increase stats for the best move in case it was a capture move
         captureHistory[moved_piece][to_sq(bestMove)][captured] << bonus1;
     }

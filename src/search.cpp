@@ -951,7 +951,7 @@ namespace {
 moves_loop: // When in check, search starts here
 
     int rangeReduction = 0;
-    int simplifying = (ss-2)->pieceCount != VALUE_NONE && (ss-2)->pieceCount - popcount(pos.pieces(pos.side_to_move())) > 300;
+    int simplifying = (ss-6)->pieceCount != VALUE_NONE && (ss-6)->pieceCount - popcount(pos.pieces(pos.side_to_move())) > 2;
 
     // Step 11. A small Probcut idea, when we are in check
     probCutBeta = beta + 409;

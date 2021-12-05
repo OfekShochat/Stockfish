@@ -69,9 +69,9 @@ namespace {
   // Reductions lookup table, initialized at startup
   int Reductions[MAX_MOVES]; // [depth or moveNumber]
 
-  Depth reduction(bool i, Depth d, int mn, bool rangeReduction) {
+  Depth reduction(bool i, Depth d, int mn, bool rangeReduction, bool simplifying) {
     int r = Reductions[d] * Reductions[mn];
-    return (r + 534) / 1024 + (!i && r > 904) + rangeReduction;
+    return (r + 534) / 1024 + (!i && r > 904) + rangeReduction + simplifying;
   }
 
   constexpr int futility_move_count(bool improving, Depth depth) {
@@ -814,6 +814,7 @@ namespace {
                   :                                    200;
 
     improving = improvement > 0;
+    ss->pieceCount = popcount(pos.pieces(pos.side_to_move()));
 
     // Step 7. Futility pruning: child node (~50 Elo).
     // The depth condition is important for mate finding.
@@ -950,6 +951,7 @@ namespace {
 moves_loop: // When in check, search starts here
 
     int rangeReduction = 0;
+    int simplifying = (ss-2)->pieceCount != VALUE_NONE && (ss-2)->pieceCount - popcount(pos.pieces(pos.side_to_move())) > 300;
 
     // Step 11. A small Probcut idea, when we are in check
     probCutBeta = beta + 409;
@@ -1037,7 +1039,7 @@ moves_loop: // When in check, search starts here
           moveCountPruning = moveCount >= futility_move_count(improving, depth);
 
           // Reduced depth of the next LMR search
-          int lmrDepth = std::max(newDepth - reduction(improving, depth, moveCount, rangeReduction > 2), 0);
+          int lmrDepth = std::max(newDepth - reduction(improving, depth, moveCount, rangeReduction > 2, simplifying), 0);
 
           if (   captureOrPromotion
               || givesCheck)
@@ -1173,7 +1175,7 @@ moves_loop: // When in check, search starts here
               || !captureOrPromotion
               || (cutNode && (ss-1)->moveCount > 1)))
       {
-          Depth r = reduction(improving, depth, moveCount, rangeReduction > 2);
+          Depth r = reduction(improving, depth, moveCount, rangeReduction > 2, simplifying);
 
           // Decrease reduction at some PvNodes (~2 Elo)
           if (   PvNode

@@ -174,7 +174,7 @@ top:
 
   case GOOD_CAPTURE:
       if (select<Best>([&](){
-                       return ((*captureHistory)[pos.moved_piece(cur->move)][to_sq(cur->move)][type_of(pos.piece_on(to_sq(cur->move)))] > 5000 && popcount(pos.checkers()) == 0) // depth > 10
+                       return (*captureHistory)[pos.moved_piece(cur->move)][to_sq(cur->move)][type_of(pos.piece_on(to_sq(cur->move)))] > 900
                             || pos.see_ge(*cur, Value(-69 * cur->value / 1024)) ?
                               // Move losing capture to endBadCaptures to be tried later
                               true : (*endBadCaptures++ = *cur, false); }))

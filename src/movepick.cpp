@@ -174,7 +174,7 @@ top:
 
   case GOOD_CAPTURE:
       if (select<Best>([&](){
-                       return (*captureHistory)[pos.moved_piece(cur->move)][to_sq(cur->move)][type_of(pos.piece_on(to_sq(cur->move)))] > -8000 && pos.see_ge(*cur, Value(-69 * cur->value / 1024)) ?
+                       return pos.see_ge(*cur, Value(-69 * cur->value / 1024)) ?
                               // Move losing capture to endBadCaptures to be tried later
                               true : (*endBadCaptures++ = *cur, false); }))
           return *(cur - 1);
@@ -241,7 +241,7 @@ top:
       return select<Best>([](){ return true; });
 
   case PROBCUT:
-      return select<Best>([&](){ return pos.see_ge(*cur, threshold); });
+      return select<Best>([&](){ return (*captureHistory)[pos.moved_piece(cur->move)][to_sq(cur->move)][type_of(pos.piece_on(to_sq(cur->move)))] > 10000 || pos.see_ge(*cur, threshold); });
 
   case QCAPTURE:
       if (select<Best>([&](){ return   depth > DEPTH_QS_RECAPTURES

@@ -939,6 +939,7 @@ namespace {
 moves_loop: // When in check, search starts here
 
     int rangeReduction = 0;
+    int meanDelta = 0;
 
     // Step 11. A small Probcut idea, when we are in check (~0 Elo)
     probCutBeta = beta + 409;
@@ -1130,6 +1131,9 @@ moves_loop: // When in check, search starts here
                && (*contHist[0])[movedPiece][to_sq(move)] >= 10000)
           extension = 1;
 
+      if (pos.capture(move) && meanDelta / (captureCount + 1) > 100)
+          extension += 1;
+
       // Add extension to new depth
       newDepth += extension;
       ss->doubleExtensions = (ss-1)->doubleExtensions + (extension == 2);
@@ -1292,6 +1296,9 @@ moves_loop: // When in check, search starts here
               // move position in the list is preserved - just the PV is pushed up.
               rm.score = -VALUE_INFINITE;
       }
+
+      if (pos.capture(move))
+          meanDelta += alpha - value;
 
       if (value > bestValue)
       {

@@ -665,9 +665,9 @@ namespace {
 
     bool mmm = !PvNode
         && ss->ttHit
-        && depth - tte->depth() < 5
         && !ss->ttPv
-        && ss->staticEval < ttValue
+        && depth - tte->depth() < 5
+        && ttValue - ss->staticEval > 100
         && tte->bound() == Bound::BOUND_LOWER;
 
     // At non-PV nodes we check for an early TT cutoff

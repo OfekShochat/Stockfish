@@ -666,8 +666,8 @@ namespace {
     bool mmm = !PvNode
         && ss->ttHit
         && !ss->ttPv
-        && depth - tte->depth() < 5
-        && ttValue - ss->staticEval > 100
+        && depth - tte->depth() < 3
+        && ttValue - ss->staticEval > 300
         && tte->bound() == Bound::BOUND_LOWER;
 
     // At non-PV nodes we check for an early TT cutoff
@@ -1191,7 +1191,7 @@ moves_loop: // When in check, search starts here
           if (ttCapture)
               r++;
 
-          if (mmm && moveCount > 10)
+          if (mmm && moveCount > 15)
               r++;
 
           ss->statScore =  thisThread->mainHistory[us][from_to(move)]

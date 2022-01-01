@@ -663,6 +663,13 @@ namespace {
     if (!excludedMove)
         ss->ttPv = PvNode || (ss->ttHit && tte->is_pv());
 
+    bool mmm = !PvNode
+        && ss->ttHit
+        && depth - tte->depth() < 5
+        && !ss->ttPv
+        && ss->staticEval < ttValue
+        && tte->bound() == Bound::BOUND_LOWER;
+
     // At non-PV nodes we check for an early TT cutoff
     if (  !PvNode
         && ss->ttHit
@@ -1182,6 +1189,9 @@ moves_loop: // When in check, search starts here
 
           // Increase reduction if ttMove is a capture (~3 Elo)
           if (ttCapture)
+              r++;
+
+          if (mmm && moveCount > 10)
               r++;
 
           ss->statScore =  thisThread->mainHistory[us][from_to(move)]

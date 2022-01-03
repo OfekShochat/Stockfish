@@ -69,9 +69,9 @@ namespace {
   // Reductions lookup table, initialized at startup
   int Reductions[MAX_MOVES]; // [depth or moveNumber]
 
-  Depth reduction(bool i, Depth d, int mn, Value delta, Value rootDelta) {
+  Depth reduction(bool i, Depth d, int mn, Value delta, Value rootDelta, int rangeStrength) {
     int r = Reductions[d] * Reductions[mn];
-    return (r + 1358 - int(delta) * 1024 / int(rootDelta)) / 1024 + (!i && r > 904);
+    return (r + 1358 - int(delta) * 1024 / int(rootDelta)) / 1024 + (!i && r > 904) + (rangeStrength > 2);
   }
 
   constexpr int futility_move_count(bool improving, Depth depth) {
@@ -938,6 +938,8 @@ namespace {
 
 moves_loop: // When in check, search starts here
 
+    int rangeStrength = 0;
+
     // Step 11. A small Probcut idea, when we are in check (~0 Elo)
     probCutBeta = beta + 409;
     if (   ss->inCheck
@@ -1024,7 +1026,7 @@ moves_loop: // When in check, search starts here
           moveCountPruning = moveCount >= futility_move_count(improving, depth);
 
           // Reduced depth of the next LMR search
-          int lmrDepth = std::max(newDepth - reduction(improving, depth, moveCount, delta, thisThread->rootDelta), 0);
+          int lmrDepth = std::max(newDepth - reduction(improving, depth, moveCount, delta, thisThread->rootDelta, rangeStrength), 0);
 
           if (   captureOrPromotion
               || givesCheck)
@@ -1157,7 +1159,7 @@ moves_loop: // When in check, search starts here
               || !captureOrPromotion
               || (cutNode && (ss-1)->moveCount > 1)))
       {
-          Depth r = reduction(improving, depth, moveCount, delta, thisThread->rootDelta);
+          Depth r = reduction(improving, depth, moveCount, delta, thisThread->rootDelta, rangeStrength);
 
           // Decrease reduction at some PvNodes (~2 Elo)
           if (   PvNode
@@ -1203,6 +1205,9 @@ moves_loop: // When in check, search starts here
           Depth d = std::clamp(newDepth - r, 1, newDepth + deeper);
 
           value = -search<NonPV>(pos, ss+1, -(alpha+1), -alpha, d, true);
+
+          if (ss->staticEval - value < 50 && depth > 7)
+              rangeStrength++;
 
           // If the son is reduced and fails high it will be re-searched at full depth
           doFullDepthSearch = value > alpha && d < newDepth;
@@ -1290,6 +1295,8 @@ moves_loop: // When in check, search starts here
       if (value > bestValue)
       {
           bestValue = value;
+
+          rangeStrength = 0;
 
           if (value > alpha)
           {

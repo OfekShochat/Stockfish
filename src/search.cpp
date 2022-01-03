@@ -1206,8 +1206,11 @@ moves_loop: // When in check, search starts here
 
           value = -search<NonPV>(pos, ss+1, -(alpha+1), -alpha, d, true);
 
-          if (ss->staticEval - value < 20 && depth > 7)
+          if (ss->staticEval - value < 30 && depth > 7)
               rangeStrength++;
+
+          else if (ss->staticEval - value > 100 || value - ss->staticEval > 100)
+              rangeStrength--;
 
           // If the son is reduced and fails high it will be re-searched at full depth
           doFullDepthSearch = value > alpha && d < newDepth;
@@ -1296,11 +1299,11 @@ moves_loop: // When in check, search starts here
       {
           bestValue = value;
 
-          rangeStrength = 0;
-
           if (value > alpha)
           {
               bestMove = move;
+
+              rangeStrength = 0;
 
               if (PvNode && !rootNode) // Update pv even in fail-high case
                   update_pv(ss->pv, move, (ss+1)->pv);

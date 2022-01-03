@@ -1206,7 +1206,7 @@ moves_loop: // When in check, search starts here
 
           value = -search<NonPV>(pos, ss+1, -(alpha+1), -alpha, d, true);
 
-          if (ss->staticEval - value < 50 && depth > 7)
+          if (ss->staticEval - value < 20 && depth > 7)
               rangeStrength++;
 
           // If the son is reduced and fails high it will be re-searched at full depth

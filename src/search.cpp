@@ -517,7 +517,7 @@ namespace {
   // search<>() is the main search function for both PV and non-PV nodes
 
   template <NodeType nodeType>
-  Value search(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth, bool cutNode) {
+  Value search(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth, bool cutNode) { // TODO: change window if the last few moves had very high branching factor.
 
     constexpr bool PvNode = nodeType != NonPV;
     constexpr bool rootNode = nodeType == Root;
@@ -560,6 +560,7 @@ namespace {
 
     // Step 1. Initialize node
     Thread* thisThread = pos.this_thread();
+    Value* rootMaterial = thisThread->rootState.nonPawnMaterial;
     ss->inCheck        = pos.checkers();
     priorCapture       = pos.captured_piece();
     Color us           = pos.side_to_move();
@@ -636,6 +637,11 @@ namespace {
         && (ttValue >= beta ? (tte->bound() & BOUND_LOWER)
                             : (tte->bound() & BOUND_UPPER)))
     {
+	if (  !PvNode
+            && ttValue - *rootMaterial < 900
+	    && !ttCapture)
+            return ttValue;
+
         // If ttMove is quiet, update move sorting heuristics on TT hit (~1 Elo)
         if (ttMove)
         {

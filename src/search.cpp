@@ -69,9 +69,9 @@ namespace {
   // Reductions lookup table, initialized at startup
   int Reductions[MAX_MOVES]; // [depth or moveNumber]
 
-  Depth reduction(bool i, Depth d, int mn, Value delta, Value rootDelta) {
+  Depth reduction(bool i, Depth d, int mn, Value delta, Value rootDelta, Value rootCurrDelta) {
     int r = Reductions[d] * Reductions[mn];
-    return (r + 1575 - int(delta) * 1024 / int(rootDelta)) / 1024 + (!i && r > 1011);
+    return (r + 1575 - int(delta) * 1024 / int(rootDelta)) / 1024 + (!i && r > 1011) - rootCurrDelta / 32011;
   }
 
   constexpr int futility_move_count(bool improving, Depth depth) {
@@ -517,7 +517,7 @@ namespace {
   // search<>() is the main search function for both PV and non-PV nodes
 
   template <NodeType nodeType>
-  Value search(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth, bool cutNode) { // TODO: change window if the last few moves had very high branching factor.
+  Value search(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth, bool cutNode) {
 
     constexpr bool PvNode = nodeType != NonPV;
     constexpr bool rootNode = nodeType == Root;
@@ -560,7 +560,6 @@ namespace {
 
     // Step 1. Initialize node
     Thread* thisThread = pos.this_thread();
-    Value* rootMaterial = thisThread->rootState.nonPawnMaterial;
     ss->inCheck        = pos.checkers();
     priorCapture       = pos.captured_piece();
     Color us           = pos.side_to_move();
@@ -637,11 +636,6 @@ namespace {
         && (ttValue >= beta ? (tte->bound() & BOUND_LOWER)
                             : (tte->bound() & BOUND_UPPER)))
     {
-	if (  !PvNode
-            && ttValue - *rootMaterial < 900
-	    && !ttCapture)
-            return ttValue;
-
         // If ttMove is quiet, update move sorting heuristics on TT hit (~1 Elo)
         if (ttMove)
         {
@@ -758,6 +752,9 @@ namespace {
         if (!excludedMove)
             tte->save(posKey, VALUE_NONE, ss->ttPv, BOUND_NONE, DEPTH_NONE, MOVE_NONE, eval);
     }
+
+    if (rootNode)
+        thisThread->rootStatEval = ss->inCheck ? VALUE_NONE : eval;
 
     // Use static evaluation difference to improve quiet move ordering (~3 Elo)
     if (is_ok((ss-1)->currentMove) && !(ss-1)->inCheck && !priorCapture)
@@ -925,6 +922,8 @@ namespace {
 
 moves_loop: // When in check, search starts here
 
+    Value rootCurrDelta = thisThread->rootStatEval != VALUE_NONE ? eval - thisThread->rootStatEval : VALUE_NONE;
+
     // Step 12. A small Probcut idea, when we are in check (~0 Elo)
     probCutBeta = beta + 401;
     if (   ss->inCheck
@@ -1011,7 +1010,7 @@ moves_loop: // When in check, search starts here
           moveCountPruning = moveCount >= futility_move_count(improving, depth);
 
           // Reduced depth of the next LMR search
-          int lmrDepth = std::max(newDepth - reduction(improving, depth, moveCount, delta, thisThread->rootDelta), 0);
+          int lmrDepth = std::max(newDepth - reduction(improving, depth, moveCount, delta, thisThread->rootDelta, rootCurrDelta), 0);
 
           if (   captureOrPromotion
               || givesCheck)
@@ -1147,7 +1146,7 @@ moves_loop: // When in check, search starts here
               || !captureOrPromotion
               || (cutNode && (ss-1)->moveCount > 1)))
       {
-          Depth r = reduction(improving, depth, moveCount, delta, thisThread->rootDelta);
+          Depth r = reduction(improving, depth, moveCount, delta, thisThread->rootDelta, rootCurrDelta);
 
           // Decrease reduction at some PvNodes (~2 Elo)
           if (   PvNode

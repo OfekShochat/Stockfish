@@ -753,6 +753,9 @@ namespace {
             tte->save(posKey, VALUE_NONE, ss->ttPv, BOUND_NONE, DEPTH_NONE, MOVE_NONE, eval);
     }
 
+    if (rootNode)
+        thisThread->rootStatEval = ss->inCheck ? VALUE_NONE : eval;
+
     // Use static evaluation difference to improve quiet move ordering (~3 Elo)
     if (is_ok((ss-1)->currentMove) && !(ss-1)->inCheck && !priorCapture)
     {
@@ -919,6 +922,9 @@ namespace {
 
 moves_loop: // When in check, search starts here
 
+    Value rootEvalDelta = eval - thisThread->rootStatEval;
+    rootEvalDelta = rootEvalDelta > 0 ? rootEvalDelta : -rootEvalDelta;
+
     // Step 12. A small Probcut idea, when we are in check (~0 Elo)
     probCutBeta = beta + 401;
     if (   ss->inCheck
@@ -1036,6 +1042,12 @@ moves_loop: // When in check, search starts here
                   continue;
 
               history += thisThread->mainHistory[us][from_to(move)];
+
+              if (   lmrDepth < 5
+                  && rootEvalDelta < 100
+		  && history < 0
+		  && !PvNode)
+		  continue;
 
               // Futility pruning: parent node (~9 Elo)
               if (   !ss->inCheck

@@ -71,7 +71,7 @@ namespace {
 
   Depth reduction(bool i, Depth d, int mn, Value delta, Value rootDelta, Value rootCurrDelta) {
     int r = Reductions[d] * Reductions[mn];
-    return (r + 1575 - int(delta) * 1024 / int(rootDelta)) / 1024 + (!i && r > 1011) - rootCurrDelta / 512;
+    return (r + 1575 - int(delta) * 1024 / int(rootDelta)) / 1024 + (!i && r > 1011) - abs(rootCurrDelta) / 2048;
   }
 
   constexpr int futility_move_count(bool improving, Depth depth) {
@@ -924,7 +924,7 @@ namespace {
 
 moves_loop: // When in check, search starts here
 
-    Value rootCurrDelta = thisThread->rootStatEval[us] == VALUE_NONE || ss->inCheck ? VALUE_DRAW : eval - thisThread->rootStatEval[us];
+    Value rootCurrDelta = thisThread->rootStatEval[us] == VALUE_NONE || ss->inCheck ? VALUE_DRAW : *thisThread->rootStatEval - eval;
 
     // Step 12. A small Probcut idea, when we are in check (~0 Elo)
     probCutBeta = beta + 401;
@@ -1012,7 +1012,7 @@ moves_loop: // When in check, search starts here
           moveCountPruning = moveCount >= futility_move_count(improving, depth);
 
           // Reduced depth of the next LMR search
-          int lmrDepth = std::max(newDepth - reduction(improving, depth, moveCount, delta, thisThread->rootDelta, rootCurrDelta), 0);
+          int lmrDepth = std::max(newDepth - reduction(improving, depth, moveCount, delta, thisThread->rootDelta, Value(0)), 0);
 
           if (   captureOrPromotion
               || givesCheck)

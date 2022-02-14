@@ -1111,12 +1111,13 @@ moves_loop: // When in check, search starts here
                    && (*contHist[0])[movedPiece][to_sq(move)] >= 7546)
               extension = 1;
           else if (!PvNode
-                   && !captureOrPromotion
+                   // && !captureOrPromotion
                    && !ss->inCheck // best: without depth condition
+                   && moveCount > 3 // best without this (currently)
                    && (ss-2)->staticEval != VALUE_NONE
                    && (ss-1)->staticEval != VALUE_NONE
-                   && (ss->staticEval - bestValue) > 200
-                   && (-(ss-1)->staticEval - (ss-2)->staticEval) > 200) // < -1000
+                   && ss->staticEval - bestValue > 200
+                   && (ss-2)->staticEval - (ss-4)->staticEval > 200) // < -1000
               extension = -1;
 	  // if ((ss-2)->staticEval != VALUE_NONE
               /* && (ss-1)->staticEval != VALUE_NONE) */

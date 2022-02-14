@@ -924,7 +924,7 @@ namespace {
 
 moves_loop: // When in check, search starts here
 
-    Value rootCurrDelta = thisThread->rootStatEval[us] == VALUE_NONE || ss->inCheck ? VALUE_NONE : eval - thisThread->rootStatEval[us];
+    Value rootCurrDelta = thisThread->rootStatEval[us] == VALUE_NONE || ss->inCheck ? VALUE_NONE : thisThread->rootStatEval[us] - eval;
 
     // Step 12. A small Probcut idea, when we are in check (~0 Elo)
     probCutBeta = beta + 401;

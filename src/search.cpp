@@ -71,7 +71,7 @@ namespace {
 
   Depth reduction(bool i, Depth d, int mn, Value delta, Value rootDelta, Value rootCurrDelta) {
     int r = Reductions[d] * Reductions[mn];
-    return (r + 1575 - int(delta) * 1024 / int(rootDelta)) / 1024 + (!i && r > 1011) - abs(rootCurrDelta) / 32011 > 1;
+    return (r + 1575 - int(delta) * 1024 / int(rootDelta)) / 1024 + (!i && r > 1011) - rootCurrDelta / 32011;
   }
 
   constexpr int futility_move_count(bool improving, Depth depth) {
@@ -753,8 +753,10 @@ namespace {
             tte->save(posKey, VALUE_NONE, ss->ttPv, BOUND_NONE, DEPTH_NONE, MOVE_NONE, eval);
     }
 
-    if (rootNode)
-        thisThread->rootStatEval = ss->inCheck ? VALUE_NONE : eval;
+    if (rootNode) {
+        thisThread->rootStatEval[us] = ss->inCheck ? VALUE_NONE : eval;
+    	thisThread->rootStatEval[~us] = ss->inCheck ? VALUE_NONE : -eval;
+    }
 
     // Use static evaluation difference to improve quiet move ordering (~3 Elo)
     if (is_ok((ss-1)->currentMove) && !(ss-1)->inCheck && !priorCapture)
@@ -922,7 +924,7 @@ namespace {
 
 moves_loop: // When in check, search starts here
 
-    Value rootCurrDelta = thisThread->rootStatEval != VALUE_NONE ? eval - thisThread->rootStatEval : VALUE_NONE;
+    Value rootCurrDelta = thisThread->rootStatEval[us] == VALUE_NONE || ss->inCheck ? VALUE_NONE : eval - thisThread->rootStatEval[us];
 
     // Step 12. A small Probcut idea, when we are in check (~0 Elo)
     probCutBeta = beta + 401;

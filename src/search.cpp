@@ -1166,8 +1166,8 @@ moves_loop: // When in check, search starts here
           if (ttCapture)
               r++;
 
-	  if (fullDidnt > 3 && !captureOrPromotion && !ss->inCheck)
-              r++;
+	  if (!PvNode && !captureOrPromotion && (fullDidnt * moveCount > moveCount + 5))
+              r--;
 
           ss->statScore =  thisThread->mainHistory[us][from_to(move)]
                          + (*contHist[0])[movedPiece][to_sq(move)]

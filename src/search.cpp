@@ -776,7 +776,7 @@ namespace {
     thisThread->complexityAverage.update(complexity);
 
 
-    isComplexDraw = thisThread->complexityAverage.value() > 1024 && improving;
+    isComplexDraw = improving && thisThread->complexityAverage.value() > 1024 && ss->staticEval < 50 && ss->staticEval > -50;
     // Step 7. Razoring.
     // If eval is really low check with qsearch if it can exceed alpha, if it can't,
     // return a fail low.

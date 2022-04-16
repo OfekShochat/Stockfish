@@ -553,7 +553,7 @@ namespace {
     Move ttMove, move, excludedMove, bestMove;
     Depth extension, newDepth;
     Value bestValue, value, ttValue, eval, maxValue, probCutBeta;
-    bool givesCheck, improving, didLMR, priorCapture, isComplexDraw;
+    bool givesCheck, improving, didLMR, priorCapture, isComplexSmth;
     bool capture, doFullDepthSearch, moveCountPruning, ttCapture;
     Piece movedPiece;
     int moveCount, captureCount, quietCount, bestMoveCount, improvement, complexity;
@@ -727,7 +727,7 @@ namespace {
         improving = false;
         improvement = 0;
         complexity = 0;
-	isComplexDraw = false;
+	isComplexSmth = false;
         goto moves_loop;
     }
     else if (ss->ttHit)
@@ -776,7 +776,7 @@ namespace {
     thisThread->complexityAverage.update(complexity);
 
 
-    isComplexDraw = thisThread->complexityAverage.value() > 768 && abs(ss->staticEval) < 25;
+    isComplexSmth = thisThread->complexityAverage.value() > 512 && abs(ss->staticEval) < 200;
     // Step 7. Razoring.
     // If eval is really low check with qsearch if it can exceed alpha, if it can't,
     // return a fail low.
@@ -1117,8 +1117,9 @@ moves_loop: // When in check, search starts here
               extension = 1;
 
 	  else if (   PvNode
-                   && isComplexDraw
-		   && (ss-1)->moveCount < 10
+                   && isComplexSmth
+		   && (ss-1)->moveCount > 10
+		   && pos.count<ALL_PIECES>() < 10
 		   && abs(bestValue) < 2)
               extension = 1;
       }

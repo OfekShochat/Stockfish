@@ -776,7 +776,7 @@ namespace {
     thisThread->complexityAverage.update(complexity);
 
 
-    isComplexDraw = improving && thisThread->complexityAverage.value() > 1024 && ss->staticEval < 50 && ss->staticEval > -50;
+    isComplexDraw = thisThread->complexityAverage.value() > 768 && abs(ss->staticEval) < 25;
     // Step 7. Razoring.
     // If eval is really low check with qsearch if it can exceed alpha, if it can't,
     // return a fail low.
@@ -1118,7 +1118,8 @@ moves_loop: // When in check, search starts here
 
 	  else if (   PvNode
                    && isComplexDraw
-		   && (ss-1)->moveCount < 10)
+		   && (ss-1)->moveCount < 10
+		   && abs(bestValue) < 2)
               extension = 1;
       }
 

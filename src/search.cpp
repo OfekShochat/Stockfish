@@ -785,6 +785,13 @@ namespace {
             return value;
     }
 
+    else if (PvNode && depth <= 6 && eval < beta && eval > complexity * alpha / 2)
+    {
+        eval = qsearch<PV>(pos, ss, eval - 200 + 6*depth*depth, beta); // Narrow the window, with some margin (more leafy = more margin)
+        if (eval >= beta)
+            return eval;
+    }
+
     // Step 8. Futility pruning: child node (~25 Elo).
     // The depth condition is important for mate finding.
     if (   !ss->ttPv

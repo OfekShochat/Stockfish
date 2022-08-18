@@ -555,9 +555,9 @@ namespace {
 
     TTEntry* tte;
     Key posKey;
-    Move ttMove, move, excludedMove, bestMove;
+    Move ttMove, move, excludedMove, bestMove, worstProbcut;
     Depth extension, newDepth;
-    Value bestValue, value, ttValue, eval, maxValue, probCutBeta;
+    Value bestValue, value, ttValue, eval, maxValue, probCutBeta, worstProbcutV;
     bool givesCheck, improving, priorCapture, singularQuietLMR;
     bool capture, moveCountPruning, ttCapture;
     Piece movedPiece;
@@ -845,6 +845,7 @@ namespace {
     }
 
     probCutBeta = beta + 179 - 46 * improving;
+    worstProbcutV = VALUE_INFINITE;
 
     // Step 10. ProbCut (~4 Elo)
     // If we have a good enough capture and a reduced search returns a value
@@ -864,6 +865,7 @@ namespace {
         assert(probCutBeta < VALUE_INFINITE);
 
         MovePicker mp(pos, ttMove, probCutBeta - ss->staticEval, depth - 3, &captureHistory);
+        worstProbcut = MOVE_NONE;
 
         while ((move = mp.next_move()) != MOVE_NONE)
             if (move != excludedMove && pos.legal(move))
@@ -887,18 +889,27 @@ namespace {
 
                 pos.undo_move(move);
 
+                if (value < worstProbcutV) {
+                    worstProbcut = move;
+                    worstProbcutV = value;
+                }
+
                 if (value >= probCutBeta)
                 {
                     // Save ProbCut data into transposition table
                     tte->save(posKey, value_to_tt(value, ss->ply), ss->ttPv, BOUND_LOWER, depth - 3, move, ss->staticEval);
-                    return value;
-                } else if (alpha - value > 100 && depth > 8) {
-                    PieceType captured = type_of(pos.piece_on(to_sq(move)));
-                    captureHistory[pos.moved_piece(move)][to_sq(move)][captured] << -stat_bonus(depth - 4);
-                }
-            }
-    }
+                    if (moveCount > 2) {
+                        PieceType captured = type_of(pos.piece_on(to_sq(worstProbcut)));
+                        captureHistory[pos.moved_piece(move)][to_sq(move)][captured] << depth * (probCutBeta - worstProbcut);
+                    }
 
+                    return value;
+                }
+                moveCount++;
+            }
+        moveCount = 0;
+    }
+   
     // Step 11. If the position is not in TT, decrease depth by 3.
     // Use qsearch if depth is equal or below zero (~4 Elo)
     if (    PvNode

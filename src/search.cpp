@@ -787,7 +787,7 @@ namespace {
 
     else if (PvNode && depth <= 6 && eval < beta && eval > complexity * alpha / 2)
     {
-        eval = qsearch<PV>(pos, ss, eval - 200 + 6*depth*depth, beta); // Narrow the window, with some margin (more leafy = more margin)
+        eval = qsearch<PV>(pos, ss, beta - complexity / depth, beta); // Narrow the window, with some margin (more leafy = more margin)
         if (eval >= beta)
             return eval;
     }

@@ -893,7 +893,7 @@ namespace {
                     tte->save(posKey, value_to_tt(value, ss->ply), ss->ttPv, BOUND_LOWER, depth - 3, move, ss->staticEval);
                     return value;
                 } else if (alpha - value > 100 && depth > 8) {
-                    PieceType captured = type_of(pos.piece_on(to_sq(bestMove)));
+                    PieceType captured = type_of(pos.piece_on(to_sq(move)));
                     captureHistory[pos.moved_piece(move)][to_sq(move)][captured] << -stat_bonus(depth - 4);
                 }
             }

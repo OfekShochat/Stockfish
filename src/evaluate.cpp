@@ -1048,31 +1048,36 @@ make_v:
 /// evaluate() is the evaluator for the outer world. It returns a static
 /// evaluation of the position from the point of view of the side to move.
 
-Value Eval::evaluate(const Position& pos, int* complexity) {
+Value Eval::evaluate(const Position& pos, int* complexity, Depth depth) {
 
   Value v;
   Color stm = pos.side_to_move();
   Value psq = pos.psq_eg_stm();
+  int pieces = pos.count<ALL_PIECES>();
 
   // We use the much less accurate but faster Classical eval when the NNUE
   // option is set to false. Otherwise we use the NNUE eval unless the
   // PSQ advantage is decisive and several pieces remain (~3 Elo)
-  bool useClassical = !useNNUE || (pos.count<ALL_PIECES>() > 7 && abs(psq) > 1760);
+  bool useClassical = !useNNUE || (pieces > 7 && abs(psq) > 1760);
   if (useClassical)
       v = Evaluation<NO_TRACE>(pos).value();
   else
   {
       int nnueComplexity;
+      int oldComplexity;
       int scale = 1064 + 106 * pos.non_pawn_material() / 5120;
       Value optimism = pos.this_thread()->optimism[stm];
 
       Value nnue = NNUE::evaluate(pos, true, &nnueComplexity);
       // Blend nnue complexity with (semi)classical complexity
-      nnueComplexity = (104 * nnueComplexity + 131 * abs(nnue - psq)) / 256;
-      if (complexity) // Return hybrid NNUE complexity to caller
-          *complexity = nnueComplexity;
+      oldComplexity  = (104 * nnueComplexity + 131 * abs(nnue - psq)) / 256;
+      nnueComplexity = (abs(nnue - psq) * optimism
+                      + nnueComplexity * pieces) / 1024;
+      if (complexity) { // Return hybrid NNUE complexity to caller
+          *complexity = depth < 8 ? nnueComplexity : oldComplexity;
+      }
 
-      optimism = optimism * (269 + nnueComplexity) / 256;
+      optimism = optimism * (269 + oldComplexity) / 256;
       v = (nnue * scale + optimism * (scale - 754)) / 1024;
   }
 

@@ -1074,7 +1074,7 @@ Value Eval::evaluate(const Position& pos, int* complexity, Depth depth) {
       nnueComplexity = (abs(nnue - psq) * optimism
                       + nnueComplexity * pieces) / 1024;
       if (complexity) { // Return hybrid NNUE complexity to caller
-          *complexity = depth < 8 ? nnueComplexity : oldComplexity;
+          *complexity = depth < 4 ? nnueComplexity : oldComplexity;
       }
 
       optimism = optimism * (269 + oldComplexity) / 256;

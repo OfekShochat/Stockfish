@@ -1100,9 +1100,9 @@ moves_loop: // When in check, search starts here
                    && (*contHist[0])[movedPiece][to_sq(move)] >= 5177)
               extension = 1;
           else if (   PvNode
-                   && capture
-                   && delta < 200
-                   && delta - ss->staticEval < 200) // or a reduction when we will probably not hit alpha.
+                   && capture // check with improvement if we'd improve past alpha?
+                   && delta - ss->staticEval < 100
+                   && !ttCapture) // or a reduction when we will probably not hit alpha.
               extension = 1;
       }
 

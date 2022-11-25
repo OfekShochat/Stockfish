@@ -1099,6 +1099,11 @@ moves_loop: // When in check, search starts here
                    && move == ss->killers[0]
                    && (*contHist[0])[movedPiece][to_sq(move)] >= 5177)
               extension = 1;
+          else if (   PvNode
+                   && capture
+                   && delta < 200
+                   && delta - ss->staticEval < 200) // or a reduction when we will probably not hit alpha.
+              extension = 1;
       }
 
       // Add extension to new depth
@@ -1535,7 +1540,7 @@ moves_loop: // When in check, search starts here
 
       // Do not search moves with negative SEE values (~5 Elo)
       if (    bestValue > VALUE_TB_LOSS_IN_MAX_PLY
-          && !pos.see_ge(move) && beta - alpha > 150)
+          && !pos.see_ge(move))
           continue;
 
       // Speculative prefetch as early as possible

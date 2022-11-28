@@ -1101,8 +1101,8 @@ moves_loop: // When in check, search starts here
               extension = 1;
           else if (   PvNode
                    && capture // check with improvement if we'd improve past alpha?
-                   && delta - ss->staticEval < 100
-                   && improvement > delta - ss->staticEval) // or a reduction when we will probably not hit alpha.
+                   && improvement > delta
+                   && alpha - ss->staticEval < 100) // or a reduction when we will probably not hit alpha.
               extension = 1;
       }
 

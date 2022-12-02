@@ -940,7 +940,7 @@ moves_loop: // When in check, search starts here
                          && ttMove
                          && (tte->bound() & BOUND_UPPER)
                          && tte->depth() >= depth;
-    bool LLL = (!pos.has_repeated() + 1) * (beta - alpha - improvement) / 1024 * 324;
+    bool LLL = (!pos.has_repeated() + 1) * (beta - alpha - improvement) * 324 / 1024;
 
     // Step 13. Loop through all pseudo-legal moves until no moves remain
     // or a beta cutoff occurs.
@@ -1102,7 +1102,8 @@ moves_loop: // When in check, search starts here
               extension = 1;
           else if (   PvNode
                    && capture
-                   && LLL + pos.piece_on(to_sq(move)) > 256) // or a reduction when we will probably not hit alpha.
+                   && !ss->ttHit
+                   && beta - alpha - improvement < 0)
               extension = 1;
       }
 
